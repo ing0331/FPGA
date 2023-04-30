@@ -1,7 +1,7 @@
 # FPGA
   #board: ZYNQ XC7Z020-CLG484-1 
   #IDE: Vivado 2018.3
-  ![FPGA練習進度](https://user-images.githubusercontent.com/91197477/235341862-6f2f08d1-c437-44a1-801c-db7238ab8a61.jpg)
+  ![FPGA練習進度](https://user-images.githubusercontent.com/91197477/235342101-abd3475f-e8fd-4a45-b42a-cc7ec0e44d01.jpg)
 
 -------------
 
