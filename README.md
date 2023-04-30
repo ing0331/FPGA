@@ -1,4 +1,7 @@
 # FPGA
+  #board: ZYNQ XC7Z020-CLG484-1 
+![image](https://user-images.githubusercontent.com/91197477/235341763-116ac9da-d917-4b9b-a656-11c697d8639d.png)
+
 
 PPT_website:
 
