@@ -14,4 +14,4 @@ PPT_website:
   
   VGA_clock: <https://docs.google.com/presentation/d/1EzO3roLt0gmvVqBIuCxsLtbWYxsPmWKJ/edit?usp=sharing&ouid=103027492385642734663&rtpof=true&sd=true>
 
-  VGA_pong_BRam: <https://docs.google.com/presentation/d/1XwqOpcf3MuYtLv7JjLyfIkMw0nnr3b1l/edit?usp=sharing&ouid=103027492385642734663&rtpof=true&sd=true>
+  VGA_pong_BRam: <https://docs.google.com/presentation/d/1F3pL9shmDwhosRtRO27GW7VB_Z4sCIPr/edit?usp=sharing&ouid=103027492385642734663&rtpof=true&sd=true>
