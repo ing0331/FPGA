@@ -26,7 +26,10 @@ entity FSM_VGA is
 	o_pad2_y : out integer range 0 to g_TOTAL_ROWS-1-pad_width := g_TOTAL_ROWS/2- pad_width/2;
 
     o_ball_x : out std_logic_vector(9 downto 0);
-    o_ball_y : out std_logic_vector(9 downto 0)
+    o_ball_y : out std_logic_vector(9 downto 0);
+	
+	o_score1 : out std_logic_vector(3 downto 0);
+	o_score2 : out std_logic_vector(3 downto 0)
 	);
 end entity FSM_VGA;
 
@@ -52,6 +55,9 @@ architecture RTL of FSM_VGA is
 	signal ballDirx : std_logic := 'Z';
 	signal ballDiry : std_logic := 'Z';	
 	signal Dir_en : std_logic := 'Z';
+	signal score1 : std_logic_vector(3 downto 0) := (others => '0');
+	signal score2 : std_logic_vector(3 downto 0) := (others => '0');
+	signal score_en : std_logic := '0';
 begin
 FSM_pong: process(i_clk, rst, btn1, btn2)
 	begin
@@ -399,10 +405,42 @@ pad2_move: process(rst, move_clk, pad2_y)
 		  end if;
 		end if;
 	end process;
+	
+score_cnt : process(i_clk, rst)
+begin
+	if (rst = '0') or (score1 = 11) or (score2 = 11) then
+		score1 <= (others => '0');
+		score2 <= (others => '0');
+	elsif rising_edge(i_clk) then
+		case sta is
+			when "01"|"10" =>
+				score_en <= '1';
+			when "11" =>
+				case ballDirx is
+					when '1' =>
+						if score_en = '1' then
+							score2 <= score2 + '1';
+						end if;
+						score_en <= '0';
+					when '0' =>
+						if score_en = '1' then
+							score1 <= score1 + '1';
+						end if;
+						score_en <= '0';	
+					when others =>
+						score_en <= score_en;
+				end case;
+			when others =>
+				score_en <= score_en;
+		end case;
+	end if;
+end process;
 
-	o_ball_x <= std_logic_vector(to_unsigned(ball_x, o_ball_x'length));
+    o_ball_x <= std_logic_vector(to_unsigned(ball_x, o_ball_x'length));
 	o_ball_y <= std_logic_vector(to_unsigned(ball_y, o_ball_y'length));
 	o_pad1_y <= pad1_y;
 	o_pad2_y <= pad2_y;
-
+	o_score1 <= score1;
+	o_score2 <= score2;
+	
 end RTL;

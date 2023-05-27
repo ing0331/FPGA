@@ -89,9 +89,32 @@ END component blk_mona;
     o_pad1_y : out integer range 0 to g_TOTAL_ROWS-1-pad_width := g_TOTAL_ROWS/2- pad_width/2;
     o_pad2_y : out integer range 0 to g_TOTAL_ROWS-1-pad_width := g_TOTAL_ROWS/2- pad_width/2;
     o_ball_x : out std_logic_vector(9 downto 0);--out integer range -ball_leng to g_TOTAL_COLS-1;  
-    o_ball_y : out std_logic_vector(9 downto 0) --out integer range 0 to g_TOTAL_ROWS-1 -ball_width
+    o_ball_y : out std_logic_vector(9 downto 0); --out integer range 0 to g_TOTAL_ROWS-1 -ball_width
+	
+    o_score1 : out std_logic_vector(3 downto 0);
+    o_score2 : out std_logic_vector(3 downto 0)
 	);
 end component FSM_VGA;
+  component Number_Displayer is
+  	generic (
+          DATA_WIDTH    : integer := 8;
+          COL_BITS       : integer := 10
+	  );
+	 port (
+	   clock         : in std_logic;	   -- Main Clock (100 MHz)
+	   rst           : in std_logic;
+	   btn1           : in std_logic_vector(1 downto 0);
+	   btn2           : in std_logic_vector(1 downto 0);
+	   -- VGA
+	   o_VGA_HSync : out std_logic;
+	   o_VGA_VSync : out std_logic;
+	   o_VGA_Red : out std_logic_vector(2 downto 0);
+	   o_VGA_Grn : out std_logic_vector(2 downto 0);
+	   o_VGA_Blu : out std_logic_vector(1 downto 0);
+	   score1 : out integer;
+	   score2 : out integer
+	   );
+	end component Number_Displayer;
   signal clk_cnt : std_logic_vector(23 downto 0) := (others => '0');
   signal move_clk : std_logic := '1';
   signal w_VSync : std_logic;
@@ -110,6 +133,9 @@ end component FSM_VGA;
   
   signal pad1_y : integer range 0 to g_TOTAL_ROWS-1-pad_width :=  g_TOTAL_ROWS/2- pad_width/2;
   signal pad2_y : integer range 0 to g_TOTAL_ROWS-1-pad_width := g_TOTAL_ROWS/2- pad_width/2; 
+  signal w_score1 : std_logic_vector(3 downto 0);
+  signal w_score2 : std_logic_vector(3 downto 0);
+  signal score_VGA : std_logic_vector(7 downto 0);
   
 begin
   Sync_To_Count_inst : Sync_To_Count
@@ -132,8 +158,8 @@ begin
 		clk_cnt <= (others => '0');
 	elsif rising_edge (i_Clk) then
 		clk_cnt <= clk_cnt + '1';
-		 if clk_cnt = 8*525/2 then     --tb
---		if clk_cnt = 800*525/2 then   	--FPGA
+--		 if clk_cnt = 8*525/2 then     --tb
+		if clk_cnt = 800*525/2 then   	--FPGA
 		  move_clk <= not move_clk;
 		  clk_cnt <= (others => '0');
 		end if;
@@ -230,8 +256,28 @@ begin
 		o_pad1_y => pad1_y,
 		o_pad2_y => pad2_y,
 		o_ball_x => ball_x,
-		o_ball_y => ball_y
+		o_ball_y => ball_y,
+		o_score1 => w_score1,
+		o_score2 => w_score2
 		);
+		
+	score_cnt: entity work.Number_Displayer
+	port map(
+		clk      => i_Clk,
+		fsync_in => w_VSync,
+		rsync_in => w_HSync,
+		col_count => w_Col_Count,
+		row_count => w_ROW_Count,
+		
+		pos_row => "0000111100", -- 60
+		pos_col => "0100111100", -- 316
+		score1 => w_score1,
+		score2 => w_score2,
+		
+		fsync_out => open,
+		rsync_out => open,
+		data_out => score_VGA
+	);
   -------------------------
   p_TP_Select : process (i_Clk) is
   begin
@@ -248,6 +294,10 @@ begin
 			 o_Red_Video <= (others => '1');
 			 o_Grn_Video <= (others => '1');
 			 o_Blu_Video <= (others => '1');
+		elsif (w_Col_Count >= "0100111100" and w_Row_Count >= "0000111100" and w_Col_Count <= "0101000100" and w_Row_Count <= "0001000100" ) then
+			o_Red_Video <= score_VGA(2 downto 0);
+			o_Grn_Video <= score_VGA(5 downto 3);
+			o_Blu_Video <= score_VGA(7 downto 6);
         else		--black
             o_Red_Video <= (others => '0');  
             o_Grn_Video <= (others => '0');  
