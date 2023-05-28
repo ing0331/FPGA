@@ -40,8 +40,7 @@ architecture Behavioral of Number_Displayer is
 	signal FontAddress : STD_LOGIC_VECTOR(6 downto 0);
 
 begin
-	-- RowsCounter : Counter port map(rsync_in, fsync_in,fsync_in,RowsCounterOut);
-	-- ColsCounter : Counter port map(clk, rsync_in,rsync_in,ColsCounterOut);
+
 	RowsCounterOut <= row_count;
 	ColsCounterOut <= col_count;
 	LUTFont : Num_Rom 
@@ -56,8 +55,6 @@ begin
 	rsync_out <= rsync_in;
 	
 process(RowsCounterOut,ColsCounterOut,pos_row,pos_col,score1, score2)
---    variable rowLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
---    variable colLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
 begin			
     -- if rising_edge(clk) then
 		-- score1
