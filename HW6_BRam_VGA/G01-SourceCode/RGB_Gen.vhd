@@ -57,16 +57,16 @@ architecture RTL of RGB_Gen is
      douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
    );
    end component blk_number;
-component blk_mona IS
-  PORT (
-    clka : IN STD_LOGIC;
-    ena : IN STD_LOGIC;
-    wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    addra : IN STD_LOGIC_VECTOR(17 DOWNTO 0);
-    dina : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
-  );
-END component blk_mona;
+--component blk_mona IS
+--  PORT (
+--    clka : IN STD_LOGIC;
+--    ena : IN STD_LOGIC;
+--    wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+--    addra : IN STD_LOGIC_VECTOR(17 DOWNTO 0);
+--    dina : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+--    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+--  );
+--END component blk_mona;
   
 	constant pad_leng : integer := 32;
 	constant pad_width : integer := 160;
@@ -95,24 +95,26 @@ END component blk_mona;
     o_score2 : out std_logic_vector(3 downto 0)
 	);
 end component FSM_VGA;
+
   component Number_Displayer is
   	generic (
           DATA_WIDTH    : integer := 8;
           COL_BITS       : integer := 10
 	  );
 	 port (
-	   clock         : in std_logic;	   -- Main Clock (100 MHz)
-	   rst           : in std_logic;
-	   btn1           : in std_logic_vector(1 downto 0);
-	   btn2           : in std_logic_vector(1 downto 0);
-	   -- VGA
-	   o_VGA_HSync : out std_logic;
-	   o_VGA_VSync : out std_logic;
-	   o_VGA_Red : out std_logic_vector(2 downto 0);
-	   o_VGA_Grn : out std_logic_vector(2 downto 0);
-	   o_VGA_Blu : out std_logic_vector(1 downto 0);
-	   score1 : out integer;
-	   score2 : out integer
+		  clk : in  STD_LOGIC;
+     fsync_in : in  STD_LOGIC;
+     rsync_in : in  STD_LOGIC;
+     col_count : in STD_LOGIC_VECTOR(9 downto 0);
+     row_count : in STD_LOGIC_VECTOR(9 downto 0);      
+     
+     pos_row : in STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
+     pos_col : in STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
+     score1 : in STD_LOGIC_VECTOR(3 downto 0);          
+     score2 : in STD_LOGIC_VECTOR(3 downto 0);
+     fsync_out : out  STD_LOGIC;
+     rsync_out : out  STD_LOGIC;
+     data_out : out  STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0)
 	   );
 	end component Number_Displayer;
   signal clk_cnt : std_logic_vector(23 downto 0) := (others => '0');
@@ -243,7 +245,7 @@ begin
 		g_TOTAL_COLS => g_TOTAL_COLS,
 		g_TOTAL_ROWS => g_TOTAL_ROWS,
 		ball_leng => ball_leng,
-		ball_width =>ball_width,
+		ball_width => ball_width,
 		pad_leng => pad_leng,
 		pad_width => pad_width
 		)
@@ -264,8 +266,8 @@ begin
 	score_cnt: entity work.Number_Displayer
 	port map(
 		clk      => i_Clk,
-		fsync_in => w_VSync,
-		rsync_in => w_HSync,
+		fsync_in => w_HSync,
+		rsync_in => w_VSync,
 		col_count => w_Col_Count,
 		row_count => w_ROW_Count,
 		
@@ -294,7 +296,7 @@ begin
 			 o_Red_Video <= (others => '1');
 			 o_Grn_Video <= (others => '1');
 			 o_Blu_Video <= (others => '1');
-		elsif (w_Col_Count >= "0100111100" and w_Row_Count >= "0000111100" and w_Col_Count <= "0101000100" and w_Row_Count <= "0001000100" ) then
+		elsif (w_Col_Count >= "0100111100" and w_Row_Count >= "0000111100") then   --and w_Col_Count <= "0101000101" and w_Row_Count <= "0001000100" ) then
 			o_Red_Video <= score_VGA(2 downto 0);
 			o_Grn_Video <= score_VGA(5 downto 3);
 			o_Blu_Video <= score_VGA(7 downto 6);

@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_1164.all;
 
-entity VGA_Bram_top is
+entity VGA_BRAM_top is
  port (
    -- Main Clock (100 MHz)
    clock         : in std_logic;
@@ -16,9 +16,9 @@ entity VGA_Bram_top is
    o_VGA_Grn : out std_logic_vector(2 downto 0);
    o_VGA_Blu : out std_logic_vector(1 downto 0)
    );
-end VGA_Bram_top;
+end VGA_BRAM_top;
 
-architecture Behavioral of VGA_Bram_top is
+architecture Behavioral of VGA_BRAM_top is
 -- VGA Constants to set Frame Size
  constant c_VIDEO_WIDTH : integer := 3;
  constant c_TOTAL_COLS  : integer := 800;

@@ -24,25 +24,26 @@ entity Number_Displayer is
 	end Number_Displayer;
 
 architecture Behavioral of Number_Displayer is 
+
 	constant NUMBERS_DIM : integer := 8;
 	component Num_Rom is
 	port(
-			en : in STD_LOGIC;		--'1'
-			address : in STD_LOGIC_VECTOR(6 downto 0);
-			rd : in STD_LOGIC;		--'1'
-			data_out : out STD_LOGIC_VECTOR(0 to NUMBERS_DIM-1) );
+        en : in STD_LOGIC;		--'1'
+        address : in STD_LOGIC_VECTOR(6 downto 0);
+        rd : in STD_LOGIC;		--'1'
+        data_out : out STD_LOGIC_VECTOR(0 to NUMBERS_DIM-1) );
 	end component;
 
-	signal RowsCounterOut,ColsCounterOut : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
-	signal rowLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0) := (others => '0');
-	signal colLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0) := (others => '0');
+--	signal row_count,col_count : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
+--	signal rowLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0) := (others => '0');
+--	signal colLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0) := (others => '0');
 	signal FontDataOut : STD_LOGIC_VECTOR(0 to NUMBERS_DIM-1);
 	signal FontAddress : STD_LOGIC_VECTOR(6 downto 0);
 
 begin
 
-	RowsCounterOut <= row_count;
-	ColsCounterOut <= col_count;
+--	row_count <= row_count;
+--	col_count <= col_count;
 	LUTFont : Num_Rom 
 	port map(
 		en => '1',
@@ -54,32 +55,35 @@ begin
 	fsync_out <= fsync_in;
 	rsync_out <= rsync_in;
 	
-process(RowsCounterOut,ColsCounterOut,pos_row,pos_col,score1, score2)
-begin			
-    -- if rising_edge(clk) then
-		-- score1
-		if(RowsCounterOut >= pos_row and RowsCounterOut <= (pos_row+7) and ColsCounterOut >= (pos_col-1) and ColsCounterOut <= (pos_col+7-1)) then  
-			rowLUT <= (RowsCounterOut - pos_row);
-			colLUT <= (ColsCounterOut - (pos_col-'1'));
-			FontAddress <= (score1 & rowLUT(2 downto 0));
-			data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
-		-- .
-		elsif(RowsCounterOut >= pos_row and RowsCounterOut <= (pos_row+7) and ColsCounterOut >= (pos_col+8-1) and ColsCounterOut <= (pos_col+15-1)) then  
-			rowLUT <= (RowsCounterOut - pos_row);
-			colLUT <= (ColsCounterOut - (pos_col+"0111"));
-			FontAddress <= ("1111" & rowLUT(2 downto 0));
-			data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
-		-- score2
-		elsif(RowsCounterOut >= pos_row and RowsCounterOut <= (pos_row+7) and ColsCounterOut >= (pos_col+16-1) and ColsCounterOut <= (pos_col+23-1)) then   
-			rowLUT <= (RowsCounterOut - pos_row);
-			colLUT <= (ColsCounterOut - (pos_col+"1111"));
-			FontAddress <= (score2 & rowLUT(2 downto 0));
-			data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
-		-- Original Image
-		else
-			FontAddress <= (others => '0'); -- Only to not make infer a latch
-			data_out <= (others => '0');		--data_in
-		end if;
-    -- end if;    
-end process;
+process(row_count,col_count,pos_row,pos_col,score1, score2)
+	variable rowLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
+    variable colLUT : STD_LOGIC_VECTOR(COL_BITS-1 downto 0);
+    begin            
+        -- First Number
+        if(row_count >= pos_row and row_count <= (pos_row+7) and col_count >= (pos_col-1) and col_count <= (pos_col+7-1)) then  
+            rowLUT := (row_count - pos_row);
+            colLUT := (col_count - (pos_col-1));
+            FontAddress <= (score1 & rowLUT(2 downto 0));
+            data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
+        
+        -- Decimal Point
+        elsif(row_count >= pos_row and row_count <= (pos_row+7) and col_count >= (pos_col+8-1) and col_count <= (pos_col+15-1)) then  
+            rowLUT := (row_count - pos_row);
+            colLUT := (col_count - (pos_col+8-1));
+            FontAddress <= ("1111" & rowLUT(2 downto 0));
+            data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
+        
+        -- Second Number
+        elsif(row_count >= pos_row and row_count <= (pos_row+7) and col_count >= (pos_col+16-1) and col_count <= (pos_col+23-1)) then   
+            rowLUT := (row_count - pos_row);
+            colLUT := (col_count - (pos_col+16-1));
+            FontAddress <= (score2 & rowLUT(2 downto 0));
+            data_out <= (others => FontDataOut(conv_integer(colLUT(2 downto 0))));
+        
+        else
+            FontAddress <= (others => '0'); -- Only to not make infer a latch
+            data_out <= (others => '0');    -- data_in;
+        end if;
+    end process;    
+            
 end Behavioral;
