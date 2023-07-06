@@ -3,7 +3,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-USE work.HDL_Corner_Algorithm_pkg.ALL;
 
 entity VGA_Sync_Porch is
   generic (
@@ -31,10 +30,10 @@ end entity VGA_Sync_Porch;
 
 architecture RTL of VGA_Sync_Porch is
 
-  constant c_FRONT_PORCH_HORZ : integer := 18;
-  constant c_BACK_PORCH_HORZ  : integer := 50;
-  constant c_FRONT_PORCH_VERT : integer := 10;
-  constant c_BACK_PORCH_VERT  : integer := 33;
+  constant c_FRONT_PORCH_HORZ : integer := 56;--18;
+  constant c_BACK_PORCH_HORZ  : integer := 64;--50;
+  constant c_FRONT_PORCH_VERT : integer := 37;--10;
+  constant c_BACK_PORCH_VERT  : integer := 23;--33;
 
   component Sync_To_Count is
     generic (
