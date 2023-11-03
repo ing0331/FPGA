@@ -1,0 +1,214 @@
+module AXIinORB #
+(
+    parameter ADDR_WIDTH = 12,
+    parameter C_AXIS_TDATA_WIDTH = 32
+)
+   (
+    input    axi_clk,
+    input    axi_Mclk,
+    input    axi_reset_n,
+    /*
+     * AXI slave interface (input to the FIFO)
+     */
+    input  wire [C_AXIS_TDATA_WIDTH-1:0]  s_axis_data,
+    input  wire                   s_axis_valid,
+    input  wire    [3:0]          s_axis_keep,
+    output reg                    s_axis_ready,////
+    input  wire                   s_axis_last,
+    
+    /*
+     * AXI master interface (output of the FIFO)
+     */
+    output  wire [C_AXIS_TDATA_WIDTH-1:0]  m_axis_data,
+    output reg                   m_axis_valid,
+	output wire    [3:0]          m_axis_keep,////
+    input  wire                   m_axis_ready,
+    output reg                   m_axis_last,////
+	
+	//debug ILA
+    output ORB_intr,
+	output DMA_rst,
+	output [1:0] wsta,
+	output [9 :0] vga_hs_cnt,
+	output [9 :0] vga_vs_cnt,
+    //
+    input button_1,
+    output [9:0] sample_x,//reg 
+    output [9:0] sample_y,//reg 
+    output [9:0] match_x, //reg 
+    output [9:0] match_y, //reg 
+    output [4-1:0] r_out, //reg 
+    output [4-1:0] g_out, //reg 
+    output [4-1:0] b_out, //reg 
+    output  hsync,        // reg 
+    output  vsync         // reg 
+    );
+		wire [7 :0] o_grwy;
+				
+	reg [7 :0] data_rom, rot_data_rom;
+
+    // Instantiate ORB_matching module
+    top ORB (
+		.AXI_VALID(&{s_axis_keep}),	//
+        .DMA_wr(data_rom), // Connect this to the appropriate signal
+        .DMA_rot_wr(rot_data_rom), // Connect this to the appropriate signal
+        .sample_x(sample_x), // Connect to sample_x
+        .sample_y(sample_y), // Connect to sample_y
+        .match_x(match_x), // Connect to match_x
+        .match_y(match_y), // Connect to match_y
+        .clk(axi_clk), // Connect to axi_clk
+        .Mclk(axi_Mclk), // Connect to axi_clk
+        .rst(DMA_rst), // Connect to DMA_rst
+        .button_1(button_1), // Connect to button_1
+        .r_out(r_out), // Connect to r_out
+        .g_out(g_out), // Connect to g_out
+        .b_out(b_out), // Connect to b_out
+        .hsync(hsync), // Connect to hsync
+        .vsync(vsync), // Connect to vsync
+		.o_vga_hs_cnt(vga_hs_cnt),
+		.o_vga_vs_cnt(vga_vs_cnt),
+		.frameDone(ORB_intr),	//req new frameDone
+		.o_grwy(o_grwy)
+    );
+
+	//next page , low trig
+	assign DMA_rst = !((s_axis_keep == 4'b0000) && (m_axis_keep == 4'b0000));
+//   valid always high, trans when act area
+
+	//FSM
+	reg [1:0] sta;	
+	assign wsta = sta;
+	// parameter RxTx = 2'd0;
+			  // Rx = 2'd1;
+			  // Tx = 2'd2;
+			  // narrow = 2'd3;
+	//s2mm
+	always @(posedge axi_clk) begin
+        if (!DMA_rst) begin
+            m_axis_valid <= 1'b0;	
+			s_axis_ready <= 1'b0;
+        end 
+		else begin 				
+			case(sta)
+				2'd0:
+				begin
+				m_axis_valid <= 1'b1;  
+				s_axis_ready <= 1'b1;
+				end
+				2'd1:
+				begin
+				m_axis_valid <= 1'b0;  
+				s_axis_ready <= 1'b1;
+				end
+				2'd2:
+				begin
+				m_axis_valid <= 1'b1;  
+				s_axis_ready <= 1'b0;
+				end
+				2'd3:
+				begin
+				m_axis_valid <= 1'b0;  
+				s_axis_ready <= 1'b0;
+				end
+				default:
+				begin
+				m_axis_valid <= m_axis_valid;  
+				s_axis_ready <= s_axis_ready;
+				end
+				
+			endcase
+			// end
+		end
+	end
+	
+	assign m_axis_keep = (sta != 2'd3)?4'b1111:4'b0000;
+	
+	reg [7:0] keepCNT;
+	always@(posedge axi_clk)
+	begin
+		if ( (m_axis_keep) == 4'b0000 )	//m_axis_ready
+		begin
+				m_axis_last <= 1'b1;
+				keepCNT <= 8'd0;
+		end
+		else begin
+			if (keepCNT == 8'd144)		//ILA test
+				begin	
+					m_axis_last <= 1'b1;
+					keepCNT <= 8'd0;
+			end
+			else begin
+				m_axis_last <= 1'b0;
+				keepCNT <= keepCNT + 8'd1;
+				
+			end
+		end
+	end
+					
+	wire w_frameDone;
+	reg frameDone;
+ 
+//	parameter frameSize = 240*240;
+	always @(posedge axi_clk) begin
+        if (!DMA_rst) begin		// |s_axis_keep = 4'b1111)
+            sta <= 2'd3;//RxTx;
+        end 
+		else begin 				
+			if (vga_vs_cnt * 828 + vga_hs_cnt < 240*240/2)
+				sta <= 2'd0;//RxTx;
+			else if ((vga_vs_cnt * 828 + vga_hs_cnt < 240*240/2) & vga_hs_cnt > 10'd719)
+				sta <= 2'd1;//Rx;
+			else if (vga_vs_cnt < 10'd480 & vga_hs_cnt < 10'd720)
+				sta <= 2'd2;//Tx;
+			else
+				sta <= 2'd3;//narrow;
+		end 
+	end 
+
+	//s2mm
+	// assign m_axis_data = {o_grwy};
+	// reg [7:0] r_grwy0, r_grwy1, r_grwy2;
+    // always @(posedge axi_clk)
+    // begin
+       // if(m_axis_ready && m_axis_valid )//& m_axis_ready)
+       // begin
+		   // r_grwy0 <= o_grwy;
+		   // r_grwy1 <= r_grwy0;
+		   // r_grwy2 <= r_grwy1;
+       // end                           
+    // end                   
+	assign m_axis_data = {24'd0, o_grwy};//, r_grwy0, r_grwy1, r_grwy2};
+
+reg clkCNT;
+always@(posedge axi_clk)
+begin
+	clkCNT <= ~clkCNT;
+end
+
+always@(posedge axi_Mclk) begin
+    if ((s_axis_keep )== 4'b1111)	//if(s_axis_valid & s_axis_axis_ready )    
+   begin
+//		if (inctrl == 1'b1)
+		begin
+			case (axi_clk)	//50MHZ
+				1'd0:	//second
+					begin
+						data_rom <= s_axis_data[7:0];
+						rot_data_rom <= s_axis_data[15:8];
+					end
+				1'd1:	//first pixel
+					begin
+						data_rom <= s_axis_data[23:16];
+						rot_data_rom <= s_axis_data[31:24];
+					end
+				default:
+					begin
+						data_rom     <= s_axis_data[7:0];
+						rot_data_rom <= s_axis_data[15:8];
+					end
+			endcase
+            end
+       end
+    end
+	
+endmodule
