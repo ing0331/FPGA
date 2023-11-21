@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
-use ieee.std_logic_arith.all;
+--use ieee.std_logic_arith.all;
 
 entity top is
 
@@ -19,13 +19,13 @@ port(
     rout           : out std_logic_vector(3 downto 0); --
     gout           : out std_logic_vector(3 downto 0); --
     bout           : out std_logic_vector(3 downto 0); --
-	o_video_minus : out STD_LOGIC_VECTOR(7 DOWNTO 0);
+	o_video_minus  : out STD_LOGIC_VECTOR(7 DOWNTO 0);
 -----------------------------------------------------------------------------
-	o_vga_hs_cnt	:out std_logic_vector(9 downto 0);
-	o_vga_vs_cnt	:out std_logic_vector(9 downto 0);	--
+	o_vga_hs_cnt	:out std_logic_vector(9 downto 0);	--integer range 0 to 720;
+	o_vga_vs_cnt	:out std_logic_vector(9 downto 0);	--integer range 0 to 480;	--
 	-- SB_CRB_data_8_buf: : out std_logic_vector(7 downto 0);
-	-- ero_data           : out std_logic ;
-	-- ero_data1           : out std_logic;
+	-- ero_data      : out std_logic;
+	-- ero_data1     : out std_logic;
 	-- dila_data 	  : out std_logic ;
 	--match_data	:out std_logic_vector(39 downto 0);
     signal_test    : out std_logic
@@ -59,20 +59,6 @@ component vga_act_cnt
 end component;
 
 --------D:\GSlab_git_NAS\HW11_Host_DDR\G01-SourceCode----------ram---------------------------
-
--- component blk_mem_gen_345600
-    -- port(
-        -- clka : IN STD_LOGIC;
-        -- ena : IN STD_LOGIC;
-        -- wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-        -- addra : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
-        -- dina : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-        -- clkb : IN STD_LOGIC;
-        -- enb : IN STD_LOGIC;
-        -- addrb : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
-        -- doutb : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
-    -- );
--- end component;
 component blk_mem_gen_345600	--delay_video_minus
     port(
         clka : IN STD_LOGIC;
@@ -152,7 +138,7 @@ port(
  );
 end component;
 
-	signal range_total_cnt    : integer range 0 to 1289:=0;
+	signal range_total_cnt    : integer range 0 to 729;	--1289:=0;
 	signal buf_sobel_cc_delay : integer range 0 to 3   :=0;
 	signal range_total_cnt_en : std_logic:='0';
 	signal buf_Y_temp_en      : std_logic:='0';
@@ -386,9 +372,6 @@ SIGNAL    brray_cnt     : std_logic_vector(8 downto 0);
 signal harris_ripple    : std_logic;
 
 SIGNAL    uv_8bitin, uv_8bitout ,uv_8bitinO, uv_8bitoutO   : std_logic_vector(7 downto 0);
-
-
-
 --------------AFTER------
 
 signal Y_vector_singal   : std_logic;
@@ -502,6 +485,8 @@ signal    turn_down_s_buf    : std_logic;
 begin
 -------------------------------------------- 
 o_video_minus <= video_minus;
+o_vga_hs_cnt <= std_logic_vector(to_unsigned(vga_hs_cnt, 10));
+o_vga_vs_cnt <= std_logic_vector(to_unsigned(vga_vs_cnt, 10));
 --------------------------------------------
 rst <= not reset;
 ----------------------------------ram----------------------------
@@ -777,8 +762,6 @@ harris_0:harris
 port map(
 	clk=>video_clk,
 	rst=>rst,
-		
-
 	video_clk => video_clk,
 	video_data=>video_minus,
 	vga_hs_cnt=>vga_hs_cnt,
@@ -1778,7 +1761,7 @@ elsif video_clk'event and video_clk = '1' then
 --if swstop = '0' then 
     IF(h< 720 )THEN
 		IF(v < 480)THEN
-		  image_cnt345600 <= conv_std_logic_vector(h + 720*v,19); 
+		  image_cnt345600 <= std_logic_vector(to_unsigned(h + 720*v,19)); 
          ELSE 
             image_cnt345600 <= "0000000000000000000";      
          END IF;
@@ -1820,7 +1803,7 @@ begin
 						buf_inte_en        <= '1';
 					end if;
 				else
-					if range_total_cnt < 1280 then
+					if range_total_cnt < 720 then	--1280
 						SBB_buf_en      <= '1';
 						SB_buf_012_en   <= '1';
 						buf_sobel_cc_en <= '1';
@@ -1835,8 +1818,8 @@ begin
 						buf_dila_en     <= '0';
 						buf_inte_en     <= '0';
 					end if;
-					if range_total_cnt = 1289 then
-						range_total_cnt <= 1289;
+					if range_total_cnt = 729 then	--1289 then
+						range_total_cnt <= 729;	--1289;
 					else
 						range_total_cnt <= range_total_cnt + 1;
 					end if;
