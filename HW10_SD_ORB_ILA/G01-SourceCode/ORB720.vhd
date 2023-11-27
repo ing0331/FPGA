@@ -27,7 +27,7 @@ port(
 	-- ero_data      : out std_logic;
 	-- ero_data1     : out std_logic;
 	-- dila_data 	  : out std_logic ;
-	match_data	:out std_logic_vector(39 downto 0);
+	o_match_data	:out std_logic_vector(39 downto 0);
     signal_test    : out std_logic
 );
 end top;
@@ -59,6 +59,20 @@ component vga_act_cnt
 end component;
 
 --------D:\GSlab_git_NAS\HW11_Host_DDR\G01-SourceCode----------ram---------------------------
+
+-- component blk_mem_gen_345600
+    -- port(
+        -- clka : IN STD_LOGIC;
+        -- ena : IN STD_LOGIC;
+        -- wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+        -- addra : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+        -- dina : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        -- clkb : IN STD_LOGIC;
+        -- enb : IN STD_LOGIC;
+        -- addrb : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+        -- doutb : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+    -- );
+-- end component;
 component blk_mem_gen_345600	--delay_video_minus
     port(
         clka : IN STD_LOGIC;
@@ -487,6 +501,7 @@ begin
 o_video_minus <= video_minus;
 o_vga_hs_cnt <= std_logic_vector(to_unsigned(vga_hs_cnt, 10));
 o_vga_vs_cnt <= std_logic_vector(to_unsigned(vga_vs_cnt, 10));
+o_match_data <= match_data;
 --------------------------------------------
 rst <= not reset;
 ----------------------------------ram----------------------------
