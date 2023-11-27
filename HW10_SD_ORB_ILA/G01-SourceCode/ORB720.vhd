@@ -27,7 +27,7 @@ port(
 	-- ero_data      : out std_logic;
 	-- ero_data1     : out std_logic;
 	-- dila_data 	  : out std_logic ;
-	--match_data	:out std_logic_vector(39 downto 0);
+	match_data	:out std_logic_vector(39 downto 0);
     signal_test    : out std_logic
 );
 end top;

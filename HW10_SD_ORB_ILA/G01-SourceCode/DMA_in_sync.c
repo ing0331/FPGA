@@ -20,7 +20,6 @@
 static FATFS fatfs;
 #define FILE_r "pixels.bin"
 #define FILE_ur "rot_pixels.bin"
-// #define FILE_ur "road720.bin"
 #define imageSize 345600	//720*480
 
 u32 checkHalted(u32 baseAddress,u32 offset);
@@ -40,16 +39,16 @@ char value[691200];//2*imageSize]; // Adjust the size to match the desired read 
 static u32 *reorganized_value = (u32 *) value;
 static u32 DMA_O_dest_str[imageSize/2]; // u32 : 2*u8, 2*u8
 //u32 *reorganized_DMA_O_dest_str = (u32 *) DMA_O_dest_str;
-u32 RX_buf[720];
+u32 RX_buf[720];	//volatile
 u32 line = 0;
-u32 i;
+static u32 i = 0;
+static u32 page = 0;
 
 XScuGic IntcInstance;
 static void imageProcISR(void *CallBackRef);
 int main() {
     init_platform();
     SD_Init();
-    u32 page = 0;
 
     u32 status;
     XAxiDma_Config* myDmaConfig;
@@ -93,8 +92,8 @@ int main() {
 	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,(Xil_ExceptionHandler)XScuGic_InterruptHandler,(void *)&IntcInstance);
 	Xil_ExceptionEnable();
 
-//	u32 i = 0;
 	while (page < 3) {
+		line = 0;
 				// SD_Transfer_read("pixels.bin", (u32)value, frameSize);	//current
 //			if ((page & 1U) == 0U)//(page & 0x1 = 0)	//if lowest but of u32 page is 0
 //			{
@@ -163,8 +162,6 @@ static void imageProcISR(void *CallBackRef){
 	status = checkHalted(XPAR_AXI_DMA_0_BASEADDR,0x4);
 	while(status == 0)
 		status = checkHalted(XPAR_AXI_DMA_0_BASEADDR,0x4);
-
-	xil_printf("v: %x\n\r", line);
 
 	if(j<720){
 		status = XAxiDma_SimpleTransfer((XAxiDma *)CallBackRef,(u32)&RX_buf[j*720],720,XAXIDMA_DEVICE_TO_DMA);
