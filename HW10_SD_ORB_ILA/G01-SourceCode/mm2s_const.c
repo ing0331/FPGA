@@ -37,10 +37,10 @@ char value[691200];//2*imageSize]; // Adjust the size to match the desired read 
 
 // Reorganize the data as specified
 static u32 *reorganized_value = (u32 *) value;
-static u32 DMA_O_dest_str[imageSize/2]; // u32 : 2*u8, 2*u8
-u32 *reorganized_DMA_O_dest_str = (u32 *) DMA_O_dest_str;
-u32 RX_buf[720];	//static
- u32 line = 0;
+static u32 DMA_O_dest_str[imageSize]; // u32 : 2*u8, 2*u8
+//u32 *reorganized_DMA_O_dest_str = (u32 *) DMA_O_dest_str;
+u32 RX_buf[720];	//volatile
+u32 line = 0;
 static u32 i = 0;
 static u32 page = 0;
 
@@ -64,71 +64,74 @@ int main() {
     XAxiDma myDma2;
     myDmaConfig2 = XAxiDma_LookupConfigBaseAddr(XPAR_AXI_DMA_1_BASEADDR);
     status = XAxiDma_CfgInitialize(&myDma2, myDmaConfig2);
-    if (status != XST_SUCCESS) {
-        print("DMA initialization failed\n");
-        return -1;
-    }
+//    if (status != XST_SUCCESS) {
+//        print("DMA initialization failed\n");
+//        return -1;
+//    }
+//
+//	//Interrupt Controller Configuration
+//	XScuGic_Config *IntcConfig;
+//	IntcConfig = XScuGic_LookupConfig(XPAR_PS7_SCUGIC_0_DEVICE_ID);
+//	status =  XScuGic_CfgInitialize(&IntcInstance, IntcConfig, IntcConfig->CpuBaseAddress);
+//
+//
+//	if(status != XST_SUCCESS){
+//		xil_printf("Interrupt controller initialization failed..");
+//		return -1;
+//	}
+//
+//	XScuGic_SetPriorityTriggerType(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR,0xA0,3);
+//	status = XScuGic_Connect(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR,(Xil_InterruptHandler)imageProcISR,(void *)&myDma);
+//	if(status != XST_SUCCESS){
+//		xil_printf("Interrupt connection failed");
+//		return -1;
+//	}
+//	XScuGic_Enable(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR);
+//
+//	Xil_ExceptionInit();
+//	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,(Xil_ExceptionHandler)XScuGic_InterruptHandler,(void *)&IntcInstance);
+//	Xil_ExceptionEnable();
 
-	//Interrupt Controller Configuration
-	XScuGic_Config *IntcConfig;
-	IntcConfig = XScuGic_LookupConfig(XPAR_PS7_SCUGIC_0_DEVICE_ID);
-	status =  XScuGic_CfgInitialize(&IntcInstance, IntcConfig, IntcConfig->CpuBaseAddress);
-
-
-	if(status != XST_SUCCESS){
-		xil_printf("Interrupt controller initialization failed..");
-		return -1;
+	for (i = 0; i < 720; i++) {
+		RX_buf[i] = 0x0000;
 	}
-
-	XScuGic_SetPriorityTriggerType(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR,0xA0,3);
-	status = XScuGic_Connect(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR,(Xil_InterruptHandler)imageProcISR,(void *)&myDma);
-	if(status != XST_SUCCESS){
-		xil_printf("Interrupt connection failed");
-		return -1;
-	}
-	XScuGic_Enable(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR);
-
-	Xil_ExceptionInit();
-	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,(Xil_ExceptionHandler)XScuGic_InterruptHandler,(void *)&IntcInstance);
-	Xil_ExceptionEnable();
 
 	while (page < 3) {
 		line = 0;
-				// SD_Transfer_read("pixels.bin", (u32)value, imageSize);	//current
-			if ((page % 2 == 0))//& 1U) == 0U)//(page & 0x1 = 0)	//if lowest but of u32 page is 0
-			{
-			SD_Transfer_read("road720.bin", (u32)(value), imageSize);	//current
-			xil_printf("SD sus");
-				for (i = 0; i < 345600; i++) {
-					reorganized_DMA_O_dest_str[i] = (value[i] & 0xFF) | ((u32)value[i + imageSize] << 24);
-						// DMA_O_dest_str[i] = 0xffff;
-				}
-			}
-			else
-			{
-			SD_Transfer_read("road720.bin", (u32)(value + imageSize), imageSize);	//current		//720*480/2
-			xil_printf("SD sus");
-			for (i = 0; i < 345600; i++) {
-			            reorganized_DMA_O_dest_str[i] = (value[i + imageSize] & 0xFF) | ((u32)value[i] << 24);
-	// DMA_O_dest_str[i] = 0xffff;
-				}
-			}
+				// SD_Transfer_read("pixels.bin", (u32)value, frameSize);	//current
+//			if ((page & 1U) == 0U)//(page & 0x1 = 0)	//if lowest but of u32 page is 0
+//			{
+//			// SD_Transfer_read("road720.bin", (u32)(value), frameSize);	//current
+//			}
+//			else
+//			{
+//			// SD_Transfer_read("road720.bin", (u32)(value + frameSize), frameSize);	//current
+//			}
 
-			xil_printf("value %x\n\r", reorganized_DMA_O_dest_str[0]);
+//			reorganized_DMA_O_dest_str = ((page & 1U) == 0U) ? value&(value +imageSize) : value;
+				for (i = 0; i < 172800; i++) {
+					// reorganized_DMA_O_dest_str[i] = (reorganized_value[i + frameSize / 4] & 0xFF) |
+													// ((reorganized_value[i] & 0xFF) << 8) |
+													// ((reorganized_value[i + frameSize / 4] & 0xFF00) << 8) |
+													// ((reorganized_value[i] & 0xFF00) << 16);
+					DMA_O_dest_str[i] = 0xf00f;
+				}
+
+//			 xil_printf("value %x\n\r", DMA_O_dest_str[0]);
 
 //			// Update the file pointer
-			file_pointer += imageSize;
+//			file_pointer += imageSize;
 //
 //			// Print the file_pointer value for each loop
 //			xil_printf("File Pointer: %ld\r\n", file_pointer);
 
-//			 Xil_DCacheFlushRange((u32)value, imageSize/2);				//720*240
-			status = XAxiDma_SimpleTransfer(&myDma, (u32)DMA_O_dest_str, 345600, XAXIDMA_DMA_TO_DEVICE);//typecasting in C/C++
+			 Xil_DCacheFlushRange((u32)DMA_O_dest_str, 172800);				//720*240
+			XAxiDma_SimpleTransfer(&myDma, (u32)DMA_O_dest_str, 172800, XAXIDMA_DMA_TO_DEVICE);//typecasting in C/C++
 //			if (status != XST_SUCCESS)
 //				xil_printf("DMA failed2\n\r", status);
 
-			 Xil_DCacheFlushRange((u32)RX_buf, 720);
-			 status = XAxiDma_SimpleTransfer(&myDma2, (u32)RX_buf, 720, XAXIDMA_DEVICE_TO_DMA);
+//			 Xil_DCacheFlushRange((u32)RX_buf, 720);
+			 XAxiDma_SimpleTransfer(&myDma2, (u32)RX_buf, 720, XAXIDMA_DEVICE_TO_DMA);
 //			 if (status != XST_SUCCESS)
 //				 xil_printf("DMA failed\n\r", status);
 			// for (int i = 0; i < 40; i++) {
@@ -147,7 +150,7 @@ int main() {
 				// usleep(10);
 			// }
 
-			page = page + 1;
+//			page = page + 1;
 
 	}
     cleanup_platform();
@@ -157,7 +160,7 @@ int main() {
 static void imageProcISR(void *CallBackRef){
 	static int j=4;
 	int status;
-	xil_printf("row: %x\n\r", line);
+	xil_printf("v: %x\n\r", line);
 
 	XScuGic_Disable(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR);
 	status = checkHalted(XPAR_AXI_DMA_0_BASEADDR,0x4);

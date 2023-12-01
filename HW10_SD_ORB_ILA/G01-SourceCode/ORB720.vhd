@@ -503,7 +503,7 @@ o_vga_hs_cnt <= std_logic_vector(to_unsigned(vga_hs_cnt, 10));
 o_vga_vs_cnt <= std_logic_vector(to_unsigned(vga_vs_cnt, 10));
 o_match_data <= match_data;
 --------------------------------------------
-rst <= not reset;
+-- rst <= not reset;
 ----------------------------------ram----------------------------
 --turn_left_sw  <= '0';
 --up_sw         <= '0';
