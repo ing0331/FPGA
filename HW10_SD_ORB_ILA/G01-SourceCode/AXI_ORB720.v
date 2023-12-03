@@ -30,7 +30,7 @@ module AXI_ORB720 #
 	output [9 :0] vga_vs_cnt,
     //
 	output [39:0] match_data
-    );					//
+    );
 	assign ORB_intr = (DMA_rst == 1'b1 && vga_hs_cnt == 10'd719) ? 1'd1: 1'd0;
 					
 	reg [1:0] clk50M;	//100 data_rom, 50 sys
@@ -56,7 +56,8 @@ module AXI_ORB720 #
 		
 		.o_vga_hs_cnt(vga_hs_cnt),
 		.o_vga_vs_cnt(vga_vs_cnt),
-		.o_match_data(match_data),
+		.match_data(match_data),
+		//.frameDone(ORB_intr),	//req new frameDone
 		.signal_test(open)
     );
 
@@ -122,64 +123,35 @@ module AXI_ORB720 #
 	assign s_axis_ready = r_s_axis_ready;
 	
 	always @(posedge axi_Mclk) begin	// axi_clk and 
-        if (!DMA_rst) 
-            r_m_axis_valid <= 1'b0;	
-		else begin 		
-			if (m_axis_ready == 1'b1) 
-			begin
-				case(sta)
-					2'd0:
-					begin
-					r_m_axis_valid <= 1'b1;  
-					end
-					2'd1:
-					begin
-					r_m_axis_valid <= 1'b1;  
-					end
-					2'd2:
-					begin
-					r_m_axis_valid <= 1'b1;  
-					end
-					2'd3:
-					begin
-					r_m_axis_valid <= 1'b1;  
-					end
-					default:
-					begin
-					r_m_axis_valid <= r_m_axis_valid;  
-					end
-					
-				endcase
-			end
-			else
-				r_m_axis_valid <= 1'b0;	
-		end
-	end	
-				
-	always @(posedge axi_Mclk) begin	// axi_clk and 
         if (!DMA_rst) begin
+            r_m_axis_valid <= 1'b0;	
 			r_s_axis_ready <= 1'b0;
         end 
-	else begin 				
+		else begin 				
 			case(sta)
 				2'd0:
 				begin
+				r_m_axis_valid <= 1'b1;  
 				r_s_axis_ready <= 1'b1;
 				end
 				2'd1:
 				begin
+				r_m_axis_valid <= 1'b1;  
 				r_s_axis_ready <= 1'b1;	
 				end
 				2'd2:
 				begin
+				r_m_axis_valid <= 1'b1;  
 				r_s_axis_ready <= 1'b1;
 				end
 				2'd3:
 				begin
+				r_m_axis_valid <= 1'b1;  
 				r_s_axis_ready <= 1'b1;
 				end
 				default:
 				begin
+				r_m_axis_valid <= r_m_axis_valid;  
 				r_s_axis_ready <= r_s_axis_ready;
 				end
 				
@@ -187,5 +159,36 @@ module AXI_ORB720 #
 			// end
 		end
 	end
+	
+	wire w_frameDone;
+	reg frameDone;
+
+//    always @(*)
+//    begin
+//		case(clk50M)
+//			2'd0:
+//			begin
+//				data_rom <= s_axis_data[7:0];
+//			end
+//			2'd1:
+//			begin
+//				data_rom <= s_axis_data[15:8];
+//			end
+//			2'd2:
+//			begin
+//				data_rom <= s_axis_data[23:16];;
+//			end
+//			2'd3:
+//			begin
+//				data_rom <= s_axis_data[31:24];
+//			end
+//			default:
+//			begin
+//				data_rom <= s_axis_data[7:0];
+//			end
+			
+//		endcase
+//		// end
+//	end
 	
 endmodule
