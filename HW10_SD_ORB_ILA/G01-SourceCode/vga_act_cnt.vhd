@@ -1,5 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 -- uncomment the following library declaration if using
 -- arithmetic functions with signed or unsigned values
