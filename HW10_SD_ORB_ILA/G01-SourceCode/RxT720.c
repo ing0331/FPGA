@@ -161,7 +161,7 @@ int main() {
     return 0;
 }
 
-static void imageProcISR(XAxiDma *CallBackRef){	//(u32*)RX_buf[720]
+static void imageProcISR(XAxiDma *CallBackRef){	//(u32*)&RX_buf[720]
 	// static int j=4;
 	int status;
 	// xil_printf("v: %x\n\r", row);

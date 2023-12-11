@@ -179,7 +179,7 @@ static void imageProcISR(void *CallBackRef){
 		j++;
 	}
 	else
-		j = 0;
+		j = 1;
 
 	XScuGic_Enable(&IntcInstance,XPAR_FABRIC_AXI_ORB720_0_ORB_INTR_INTR);
 }
